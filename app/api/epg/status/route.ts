@@ -1,20 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getCacheInfo, getAvailableCountries, getCountryConfig } from '@/lib/epg-service';
+import { detectEpgProvider, type EpgSource } from '@/lib/epg-sources';
 
 /**
  * API Route für Cache-Status Informationen
  * GET /api/epg/status?country=DE
- * 
- * Gibt Informationen über den aktuellen Cache-Status zurück.
- * 
- * Query Parameter:
- * - country: Länder-Code (z.B. DE, US, GB, etc.) - Standard: DE
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const countryCode = searchParams.get('country') || 'DE';
-    
+
     const cacheInfo = getCacheInfo(countryCode);
     const config = getCountryConfig(countryCode);
     const revalidateSeconds = parseInt(
@@ -22,10 +18,9 @@ export async function GET(request: Request) {
       10
     );
 
-    // Kombiniere alle Quellen für die Anzeige
     const allSources = [...config.sources, ...config.fallbackSources];
     const uniqueSources = Array.from(
-      new Map(allSources.map(source => [source.url, source])).values()
+      new Map(allSources.map((source) => [source.url, source])).values()
     );
 
     return NextResponse.json(
@@ -44,10 +39,10 @@ export async function GET(request: Request) {
           name: `${config.name} EPG Source ${idx + 1}`,
           url: source.url,
           type: source.compressed ? 'xml.gz' : 'xml',
-          priority: config.sources.some(s => s.url === source.url) ? 'primary' : 'fallback',
-          provider: source.url.includes('epghub.xyz') ? 'EPGHub' : 
-                   source.url.includes('globetvapp') ? 'GlobeTV' :
-                   source.url.includes('epgshare01') ? 'EPGShare' : 'Unknown',
+          priority: config.sources.some((s: EpgSource) => s.url === source.url)
+            ? 'primary'
+            : 'fallback',
+          provider: detectEpgProvider(source.url),
         })),
         info: {
           totalSources: uniqueSources.length,
@@ -79,4 +74,3 @@ export async function GET(request: Request) {
 }
 
 export const dynamic = 'force-dynamic';
-
