@@ -1,14 +1,21 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { PlayIcon, StopIcon, ArrowPathIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
+import {
+  PlayIcon,
+  StopIcon,
+  ArrowPathIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/24/outline';
+import { SiteHeader } from '@/components/site-header';
 
 interface MCPTool {
   name: string;
   description: string;
   inputSchema: {
     type: string;
-    properties: Record<string, any>;
+    properties: Record<string, unknown>;
     required?: string[];
   };
 }
@@ -23,19 +30,24 @@ interface MCPResource {
 interface ServerInfo {
   server: string;
   version: string;
-  endpoints: {
-    post: string;
-    stream: string;
-  };
+  endpoints: { post: string; stream: string };
   tools: MCPTool[];
   resources: MCPResource[];
 }
+
+const BASIC_EXAMPLES = ['initialize', 'tools/list', 'tools/call', 'resources/list', 'ping'];
+const TV_EXAMPLES = [
+  'get_available_countries',
+  'get_channels',
+  'get_current_programmes',
+  'search_programmes',
+];
 
 export default function MCPInterfacePage() {
   const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [response, setResponse] = useState<any>(null);
+  const [response, setResponse] = useState<unknown>(null);
   const [streaming, setStreaming] = useState(false);
   const [streamMessages, setStreamMessages] = useState<string[]>([]);
   const [requestBody, setRequestBody] = useState(`{
@@ -48,9 +60,7 @@ export default function MCPInterfacePage() {
   useEffect(() => {
     loadServerInfo();
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
+      eventSourceRef.current?.close();
     };
   }, []);
 
@@ -58,9 +68,7 @@ export default function MCPInterfacePage() {
     try {
       const res = await fetch('/api/mcp');
       const data = await res.json();
-      if (data.result) {
-        setServerInfo(data.result);
-      }
+      if (data.result) setServerInfo(data.result);
     } catch (err) {
       console.error('Failed to load server info:', err);
     }
@@ -70,19 +78,14 @@ export default function MCPInterfacePage() {
     setLoading(true);
     setError(null);
     setResponse(null);
-
     try {
       const body = JSON.parse(requestBody);
       const res = await fetch('/api/mcp', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-
-      const data = await res.json();
-      setResponse(data);
+      setResponse(await res.json());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -92,16 +95,12 @@ export default function MCPInterfacePage() {
 
   const handleStream = () => {
     if (streaming) {
-      // Stop streaming
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
+      eventSourceRef.current?.close();
+      eventSourceRef.current = null;
       setStreaming(false);
       return;
     }
 
-    // Start streaming
     setStreaming(true);
     setStreamMessages([]);
     const eventSource = new EventSource('/api/mcp?stream=true');
@@ -122,8 +121,7 @@ export default function MCPInterfacePage() {
       }
     };
 
-    eventSource.onerror = (err) => {
-      console.error('SSE error:', err);
+    eventSource.onerror = () => {
       eventSource.close();
       eventSourceRef.current = null;
       setStreaming(false);
@@ -139,10 +137,7 @@ export default function MCPInterfacePage() {
   "params": {
     "protocolVersion": "2024-11-05",
     "capabilities": {},
-    "clientInfo": {
-      "name": "test-client",
-      "version": "1.0.0"
-    }
+    "clientInfo": { "name": "test-client", "version": "1.0.0" }
   }
 }`,
       'tools/list': `{
@@ -156,9 +151,7 @@ export default function MCPInterfacePage() {
   "method": "tools/call",
   "params": {
     "name": "echo",
-    "arguments": {
-      "message": "Hello, MCP!"
-    }
+    "arguments": { "message": "Hello, MCP!" }
   }
 }`,
       'resources/list': `{
@@ -171,7 +164,7 @@ export default function MCPInterfacePage() {
   "id": 1,
   "method": "ping"
 }`,
-      'get_available_countries': `{
+      get_available_countries: `{
   "jsonrpc": "2.0",
   "id": 1,
   "method": "tools/call",
@@ -180,29 +173,25 @@ export default function MCPInterfacePage() {
     "arguments": {}
   }
 }`,
-      'get_channels': `{
+      get_channels: `{
   "jsonrpc": "2.0",
   "id": 1,
   "method": "tools/call",
   "params": {
     "name": "get_channels",
-    "arguments": {
-      "country": "DE"
-    }
+    "arguments": { "country": "DE" }
   }
 }`,
-      'get_current_programmes': `{
+      get_current_programmes: `{
   "jsonrpc": "2.0",
   "id": 1,
   "method": "tools/call",
   "params": {
     "name": "get_current_programmes",
-    "arguments": {
-      "country": "DE"
-    }
+    "arguments": { "country": "DE" }
   }
 }`,
-      'search_programmes': `{
+      search_programmes: `{
   "jsonrpc": "2.0",
   "id": 1,
   "method": "tools/call",
@@ -216,258 +205,201 @@ export default function MCPInterfacePage() {
   }
 }`,
     };
-
-    if (examples[method]) {
-      setRequestBody(examples[method]);
-    }
+    if (examples[method]) setRequestBody(examples[method]);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            MCP HTTP Stream Interface
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Model Context Protocol Server mit HTTP Streaming Support
-          </p>
-        </div>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <SiteHeader
+        title="MCP Interface"
+        subtitle="Model Context Protocol · HTTP & SSE"
+        backHref="/de"
+        wide
+      />
 
-        {/* Server Info Card */}
+      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+        <p className="section-label mb-6">Entwickler</p>
+
         {serverInfo && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <InformationCircleIcon className="h-6 w-6 text-blue-500" />
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Server Information
-              </h2>
+          <div className="card mb-6 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <InformationCircleIcon className="h-5 w-5 text-emerald-500" />
+              <h2 className="text-sm font-medium text-white">Server</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <dl className="grid gap-4 text-sm sm:grid-cols-2">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Server</p>
-                <p className="text-lg font-medium text-gray-900 dark:text-white">
-                  {serverInfo.server}
-                </p>
+                <dt className="text-zinc-500">Name</dt>
+                <dd className="mt-0.5 text-zinc-200">{serverInfo.server}</dd>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Version</p>
-                <p className="text-lg font-medium text-gray-900 dark:text-white">
-                  {serverInfo.version}
-                </p>
+                <dt className="text-zinc-500">Version</dt>
+                <dd className="mt-0.5 text-zinc-200">{serverInfo.version}</dd>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">POST Endpoint</p>
-                <code className="text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                <dt className="text-zinc-500">POST</dt>
+                <dd className="mt-0.5 font-mono text-xs text-emerald-400/90">
                   {serverInfo.endpoints.post}
-                </code>
+                </dd>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Stream Endpoint</p>
-                <code className="text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                <dt className="text-zinc-500">Stream</dt>
+                <dd className="mt-0.5 font-mono text-xs text-emerald-400/90">
                   {serverInfo.endpoints.stream}
-                </code>
+                </dd>
               </div>
-            </div>
+            </dl>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Request Panel */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              JSON-RPC Request
-            </h2>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="card p-5">
+            <h2 className="mb-4 text-sm font-medium text-white">JSON-RPC Request</h2>
 
-            {/* Quick Examples */}
-            <div className="mb-4">
-              <div className="mb-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Basic Examples:</span>
-              </div>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {['initialize', 'tools/list', 'tools/call', 'resources/list', 'ping'].map(
-                  (method) => (
-                    <button
-                      key={method}
-                      onClick={() => insertExampleRequest(method)}
-                      className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                    >
-                      {method}
-                    </button>
-                  )
-                )}
-              </div>
-              <div className="mb-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">TV Programme Examples:</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {['get_available_countries', 'get_channels', 'get_current_programmes', 'search_programmes'].map(
-                  (method) => (
-                    <button
-                      key={method}
-                      onClick={() => insertExampleRequest(method)}
-                      className="px-3 py-1 text-sm bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
-                    >
-                      {method}
-                    </button>
-                  )
-                )}
-              </div>
+            <p className="mb-2 text-xs text-zinc-500">Basis</p>
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {BASIC_EXAMPLES.map((method) => (
+                <button
+                  key={method}
+                  type="button"
+                  onClick={() => insertExampleRequest(method)}
+                  className="chip"
+                >
+                  {method}
+                </button>
+              ))}
+            </div>
+
+            <p className="mb-2 text-xs text-zinc-500">TV / EPG</p>
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              {TV_EXAMPLES.map((method) => (
+                <button
+                  key={method}
+                  type="button"
+                  onClick={() => insertExampleRequest(method)}
+                  className="chip"
+                >
+                  {method}
+                </button>
+              ))}
             </div>
 
             <textarea
               value={requestBody}
               onChange={(e) => setRequestBody(e.target.value)}
-              className="w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter JSON-RPC 2.0 request..."
+              className="input-field h-56 resize-none"
+              spellCheck={false}
             />
 
-            <div className="mt-4 flex gap-3">
+            <div className="mt-4 flex flex-wrap gap-2">
               <button
+                type="button"
                 onClick={handleRequest}
                 disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary"
               >
-                <PlayIcon className="h-5 w-5" />
-                {loading ? 'Sending...' : 'Send Request'}
+                <PlayIcon className="h-4 w-4" />
+                {loading ? 'Sende…' : 'Senden'}
               </button>
-              <button
-                onClick={loadServerInfo}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
-              >
-                <ArrowPathIcon className="h-5 w-5" />
-                Refresh Info
+              <button type="button" onClick={loadServerInfo} className="btn-secondary">
+                <ArrowPathIcon className="h-4 w-4" />
+                Aktualisieren
               </button>
             </div>
           </div>
 
-          {/* Response Panel */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Response
-            </h2>
+          <div className="card p-5">
+            <h2 className="mb-4 text-sm font-medium text-white">Response</h2>
 
             {error && (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-red-800 dark:text-red-200 font-medium">Error</p>
-                <p className="text-red-600 dark:text-red-300 text-sm mt-1">{error}</p>
+              <div className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+                {error}
               </div>
             )}
 
-            {response && (
-              <pre className="w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm overflow-auto">
-                {JSON.stringify(response, null, 2)}
-              </pre>
-            )}
-
-            {!error && !response && (
-              <div className="w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                <p className="text-gray-400 dark:text-gray-500">
-                  Response will appear here...
-                </p>
+            {response ? (
+              <pre className="code-panel h-64">{JSON.stringify(response, null, 2)}</pre>
+            ) : (
+              <div className="code-panel flex h-64 items-center justify-center text-zinc-600">
+                Antwort erscheint hier…
               </div>
             )}
           </div>
         </div>
 
-        {/* Streaming Panel */}
-        <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Server-Sent Events Stream
-            </h2>
+        <div className="card mt-6 p-5">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-sm font-medium text-white">SSE Stream</h2>
             <button
+              type="button"
               onClick={handleStream}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                streaming
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
+              className={streaming ? 'btn-danger' : 'btn-primary'}
             >
               {streaming ? (
                 <>
-                  <StopIcon className="h-5 w-5" />
-                  Stop Stream
+                  <StopIcon className="h-4 w-4" />
+                  Stoppen
                 </>
               ) : (
                 <>
-                  <PlayIcon className="h-5 w-5" />
-                  Start Stream
+                  <PlayIcon className="h-4 w-4" />
+                  Starten
                 </>
               )}
             </button>
           </div>
-
-          <div className="w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 font-mono text-sm overflow-auto">
-            {streamMessages.length === 0 ? (
-              <p className="text-gray-400 dark:text-gray-500">
-                Stream messages will appear here...
-              </p>
-            ) : (
-              streamMessages.map((msg, idx) => (
-                <div key={idx} className="mb-2 text-gray-900 dark:text-gray-100">
-                  {msg}
-                </div>
-              ))
-            )}
-          </div>
+          <pre className="code-panel h-48">
+            {streamMessages.length === 0
+              ? 'Stream-Nachrichten erscheinen hier…'
+              : streamMessages.join('\n\n')}
+          </pre>
         </div>
 
-        {/* Tools & Resources */}
         {serverInfo && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Tools */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Available Tools ({serverInfo.tools.length})
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <div className="card p-5">
+              <h2 className="mb-4 text-sm font-medium text-white">
+                Tools ({serverInfo.tools.length})
               </h2>
-              <div className="space-y-3">
+              <ul className="max-h-80 space-y-2 overflow-y-auto">
                 {serverInfo.tools.map((tool) => (
-                  <div
+                  <li
                     key={tool.name}
-                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2.5"
                   >
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {tool.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                      {tool.description}
-                    </p>
-                  </div>
+                    <p className="text-sm font-medium text-zinc-200">{tool.name}</p>
+                    <p className="mt-1 text-xs text-zinc-500">{tool.description}</p>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
-            {/* Resources */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Available Resources ({serverInfo.resources.length})
+            <div className="card p-5">
+              <h2 className="mb-4 text-sm font-medium text-white">
+                Resources ({serverInfo.resources.length})
               </h2>
-              <div className="space-y-3">
+              <ul className="max-h-80 space-y-2 overflow-y-auto">
                 {serverInfo.resources.map((resource) => (
-                  <div
+                  <li
                     key={resource.uri}
-                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2.5"
                   >
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {resource.name}
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">
+                    <p className="text-sm font-medium text-zinc-200">{resource.name}</p>
+                    <p className="mt-1 break-all font-mono text-xs text-zinc-600">
                       {resource.uri}
                     </p>
-                    {resource.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                        {resource.description}
-                      </p>
-                    )}
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </div>
         )}
-      </div>
+
+        <p className="mt-10 text-center text-xs text-zinc-600">
+          <Link href="/de" className="hover:text-zinc-400">
+            ← Zurück zum EPG Service
+          </Link>
+        </p>
+      </main>
     </div>
   );
 }

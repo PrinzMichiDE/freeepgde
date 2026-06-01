@@ -10,7 +10,7 @@ import { usePWAMode } from '@/components/pwa-detector';
 import { FaqSection } from '@/components/faq-section';
 import { KoFiSupport } from '@/components/kofi-support';
 import { KoFiFloatingButton } from '@/components/kofi-floating-button';
-import { LanguageSwitcher } from '@/components/language-switcher';
+import { SiteHeader } from '@/components/site-header';
 import { useTranslations } from '@/hooks/use-translations';
 import Script from 'next/script';
 import { AdSenseBanner } from '@/components/adsense-banner';
@@ -44,37 +44,32 @@ export default function HomePage() {
       />
 
       <div className="min-h-screen bg-zinc-950 text-zinc-100">
-        <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
-          <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
-            <div>
-              <p className="text-sm font-semibold tracking-tight text-white">{t('title')}</p>
-              <p className="text-xs text-zinc-500">{t('subtitle')}</p>
-            </div>
-            <LanguageSwitcher />
-          </div>
-        </header>
+        <SiteHeader title={t('title')} subtitle={t('subtitle')} />
 
         <EpgAutoUpdater />
         <PwaInstallPrompt />
         <KoFiFloatingButton />
 
         <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-          <section className="mb-14">
+          <section className="mb-12">
             <p className="section-label mb-3">EPG für IPTV</p>
             <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              {t('description').replace('13', '50')}
+              {t('description').replace('13', '64')}
             </h1>
+            <p className="mt-4 text-sm leading-relaxed text-zinc-500">
+              Kostenlos, täglich aktualisiert, ohne Registrierung.
+            </p>
           </section>
 
-          <section className="mb-14" aria-labelledby="epg-url-heading">
+          <section className="mb-12" aria-labelledby="epg-url-heading">
             <IptvLinkCard />
           </section>
 
-          <section className="mb-14">
+          <section className="mb-12">
             <FeaturesGrid />
           </section>
 
-          <section className="mb-14 grid gap-4 sm:grid-cols-2">
+          <section className="mb-12 grid gap-4 sm:grid-cols-2">
             <LinkCard
               href="https://www.michelfritzsch.de/tv"
               external
@@ -91,22 +86,30 @@ export default function HomePage() {
             />
           </section>
 
-          <section id="stats" className="mb-14">
+          <section id="stats" className="mb-12">
             <StatsCard />
           </section>
 
-          <section className="mb-14">
+          <section className="mb-12">
             <KoFiSupport variant="card" />
           </section>
 
-          <section className="mb-14">
+          <section className="mb-12">
             <FaqSection />
           </section>
 
           <AdSenseBanner adSlot="1234567893" adFormat="auto" className="mb-10" />
 
-          <footer className="border-t border-zinc-800 pt-8 text-center text-sm text-zinc-500">
-            {t('footerText')}
+          <footer className="flex flex-col items-center justify-between gap-4 border-t border-zinc-800 pt-8 text-sm text-zinc-500 sm:flex-row">
+            <p>{t('footerText')}</p>
+            <a
+              href="https://ko-fi.com/michelfritzsch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-400 transition-colors hover:text-zinc-200"
+            >
+              {t('supportProject')}
+            </a>
           </footer>
         </main>
       </div>

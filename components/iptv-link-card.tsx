@@ -72,25 +72,19 @@ export function IptvLinkCard() {
         <button
           type="button"
           onClick={copyToClipboard}
-          className={`mt-4 w-full rounded-lg py-3 text-sm font-medium transition-colors ${
-            copied
-              ? 'bg-emerald-600 text-white'
-              : 'bg-white text-zinc-950 hover:bg-zinc-200'
-          }`}
+          className={`mt-4 w-full ${copied ? 'btn-primary' : 'btn-primary !bg-white !text-zinc-950 hover:!bg-zinc-200'}`}
         >
-          <span className="inline-flex items-center justify-center gap-2">
-            {copied ? (
-              <>
-                <CheckIcon className="h-5 w-5" />
-                {t('urlCopied')}
-              </>
-            ) : (
-              <>
-                <DocumentDuplicateIcon className="h-5 w-5" />
-                {t('copyUrl')}
-              </>
-            )}
-          </span>
+          {copied ? (
+            <>
+              <CheckIcon className="h-5 w-5" />
+              {t('urlCopied')}
+            </>
+          ) : (
+            <>
+              <DocumentDuplicateIcon className="h-5 w-5" />
+              {t('copyUrl')}
+            </>
+          )}
         </button>
       </div>
 
