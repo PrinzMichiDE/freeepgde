@@ -226,7 +226,7 @@ export const translations = {
     featuresTitle: '¿Por qué usar este servicio?',
     featuresSubtitle: 'Simple, rápido y confiable',
     feature1Title: 'Cobertura mundial',
-    feature1Desc: 'Datos EPG para más de 40 países en todo el mundo: Alemania, EE.UU., Reino Unido, Francia, Italia, España, Brasil, India, Japón y muchos más',
+    feature1Desc: 'Más de 50 países combinados desde EPGHub, EPGShare, IPTV-EPG.org y otras fuentes gratuitas',
     feature2Title: 'Actualizado diariamente',
     feature2Desc: 'Actualizaciones automáticas - siempre los últimos datos del programa',
     feature3Title: 'Listo para usar',

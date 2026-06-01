@@ -70,15 +70,16 @@ Ein Next.js basierter EPG (Electronic Program Guide) Service, der täglich EPG-D
 
 ## EPG Quellen
 
-Der Service lädt und merged automatisch folgende EPG Quellen:
+Der Service kombiniert pro Land mehrere freie EPG-Quellen parallel:
 
-1. **GlobeTV Germany EPG** (XML)
-   - https://raw.githubusercontent.com/globetvapp/epg/refs/heads/main/Germany/germany1.xml
-   
-2. **EPGShare DE1** (XML.GZ)
-   - https://epgshare01.online/epgshare01/epg_ripper_DE1.xml.gz
+| Anbieter | Beschreibung |
+|----------|--------------|
+| **GlobeTV** | XML-Feeds für ausgewählte Länder (GitHub) |
+| **EPGHub** | Komprimierte XMLTV-Dateien (`epghub.xyz`) |
+| **EPGShare** | Regionale Ripper-Feeds (`epgshare01.online`) |
+| **IPTV-EPG.org** | Länder-XMLTV (`iptv-epg.org/files/`) |
 
-Die Quellen werden parallel geladen und intelligent gemerged, wobei Duplikate automatisch entfernt werden.
+Konfiguration in `lib/epg-sources.ts` – über **50 Länder**, mehrere Quellen pro Land. Fehlgeschlagene URLs werden übersprungen; erfolgreiche Quellen werden intelligent gemerged (Deduplizierung).
 
 ## Setup
 
