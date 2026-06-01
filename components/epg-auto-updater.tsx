@@ -32,11 +32,11 @@ export function EpgAutoUpdater() {
 
   return (
     <div
-      className="fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 shadow-lg"
+      className="fixed left-1/2 top-[4.25rem] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/95 px-3 py-1.5 text-xs text-zinc-400 shadow-lg backdrop-blur-sm"
       role="status"
     >
       <ArrowPathIcon
-        className={`h-4 w-4 ${status === 'updating' ? 'animate-spin text-emerald-500' : ''}`}
+        className={`h-3.5 w-3.5 ${status === 'updating' ? 'animate-spin text-emerald-500' : 'text-zinc-500'}`}
       />
       {status === 'checking' ? 'EPG wird geprüft…' : 'EPG wird aktualisiert…'}
     </div>

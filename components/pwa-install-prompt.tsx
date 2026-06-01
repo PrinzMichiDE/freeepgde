@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDownTrayIcon, XMarkIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -17,127 +16,83 @@ export function PwaInstallPrompt() {
 
   useEffect(() => {
     setIsMounted(true);
-    
-    // Prüfe ob bereits installiert
+
     if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
       return;
     }
 
-    // Registriere Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((registration) => {
-          console.log('[PWA] Service Worker registriert:', registration);
-        })
-        .catch((error) => {
-          console.error('[PWA] Service Worker Fehler:', error);
-        });
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
 
-    // Höre auf beforeinstallprompt Event
+    const dismissed = localStorage.getItem('pwa-dismissed');
+    if (dismissed) {
+      const dismissedAt = parseInt(dismissed, 10);
+      if (Date.now() - dismissedAt < 24 * 60 * 60 * 1000) return;
+    }
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      
-      // Zeige Prompt nach 3 Sekunden
-      setTimeout(() => {
-        setShowPrompt(true);
-      }, 3000);
+      setTimeout(() => setShowPrompt(true), 3000);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-
-    // Zeige Install-Prompt
-    deferredPrompt.prompt();
-
-    // Warte auf User-Entscheidung
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`[PWA] User ${outcome === 'accepted' ? 'akzeptiert' : 'abgelehnt'}`);
-
-    // Cleanup
+    await deferredPrompt.prompt();
     setDeferredPrompt(null);
     setShowPrompt(false);
   };
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    // Zeige erneut nach 24 Stunden
     localStorage.setItem('pwa-dismissed', Date.now().toString());
   };
 
-  // Verhindere Hydration-Fehler während SSR
-  if (!isMounted) return null;
-  
-  // Zeige nichts wenn bereits installiert
-  if (isInstalled) return null;
+  if (!isMounted || isInstalled || !showPrompt || !deferredPrompt) return null;
 
   return (
-    <AnimatePresence>
-      {showPrompt && deferredPrompt && (
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 100 }}
-          className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-md z-50"
+    <div
+      className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm"
+      role="dialog"
+      aria-label="App installieren"
+    >
+      <div className="card relative p-4 shadow-xl">
+        <button
+          type="button"
+          onClick={handleDismiss}
+          className="absolute right-3 top-3 rounded-md p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+          aria-label="Schließen"
         >
-          <div className="bg-gradient-to-br from-emerald-500/90 to-blue-600/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-6">
-            <button
-              onClick={handleDismiss}
-              className="absolute top-3 right-3 p-1 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              <XMarkIcon className="w-5 h-5 text-white" />
-            </button>
+          <XMarkIcon className="h-4 w-4" />
+        </button>
 
-            <div className="flex items-start space-x-4">
-              <div className="p-3 bg-white/20 rounded-xl flex-shrink-0">
-                <DevicePhoneMobileIcon className="w-8 h-8 text-white" />
-              </div>
-              
-              <div className="flex-1">
-                <h3 className="text-white font-bold text-lg mb-1">
-                  Als App installieren
-                </h3>
-                <p className="text-white/90 text-sm mb-4">
-                  Installiere EPG Service auf deinem Gerät für schnelleren Zugriff und Offline-Nutzung!
-                </p>
-                
-                <div className="flex gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleInstallClick}
-                    className="flex-1 px-4 py-2.5 bg-white text-emerald-600 rounded-xl font-semibold shadow-lg flex items-center justify-center space-x-2"
-                  >
-                    <ArrowDownTrayIcon className="w-5 h-5" />
-                    <span>Installieren</span>
-                  </motion.button>
-                  
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleDismiss}
-                    className="px-4 py-2.5 bg-white/20 text-white rounded-xl font-medium"
-                  >
-                    Später
-                  </motion.button>
-                </div>
-              </div>
+        <div className="flex gap-3 pr-6">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950">
+            <DevicePhoneMobileIcon className="h-5 w-5 text-emerald-500" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-white">Als App installieren</p>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+              Schneller Zugriff und Offline-Funktionen auf dem Startbildschirm.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button type="button" onClick={handleInstallClick} className="btn-primary flex-1 py-2">
+                <ArrowDownTrayIcon className="h-4 w-4" />
+                Installieren
+              </button>
+              <button type="button" onClick={handleDismiss} className="btn-ghost px-3 py-2">
+                Später
+              </button>
             </div>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+      </div>
+    </div>
   );
 }
-
